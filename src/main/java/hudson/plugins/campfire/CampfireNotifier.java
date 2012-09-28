@@ -1,5 +1,6 @@
 package hudson.plugins.campfire;
 
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
@@ -16,6 +17,8 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CampfireNotifier extends Notifier {
 
@@ -124,7 +127,13 @@ public class CampfireNotifier extends Notifier {
         if (hudsonUrl != null && hudsonUrl.length() > 1 && (smartNotify || result != Result.SUCCESS)) {
             message = message + " (" + hudsonUrl + build.getUrl() + ")";
         }
-        message += " " + customMessage;
+        
+        try {
+			message = parseCustomMessage(customMessage, build.getEnvironment(null)) + " " + resultString + " (" + hudsonUrl + build.getUrl() + ")";;
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+        
         room.speak(message);
         if (sound) {
           String message_sound;
@@ -135,6 +144,26 @@ public class CampfireNotifier extends Notifier {
           }
           room.play(message_sound);
         }
+    }
+	
+    private String parseCustomMessage(String customMessage, EnvVars vars) {
+        Pattern token_matcher = Pattern.compile("\\{.*?\\}");
+        StringBuffer output = new StringBuffer();
+        Matcher matcher = token_matcher.matcher(customMessage);
+        while (matcher.find()) {
+          matcher.appendReplacement(output, getValueFromKey(matcher.group(), vars));
+        }
+        matcher.appendTail(output);
+        return output.toString();
+    }
+    
+    private String getValueFromKey(String key, EnvVars vars) {
+    	key = key.substring(1, key.length() - 1);
+    	if (vars.containsKey(key)) {
+    		return vars.get(key);
+    	} else {
+    		return "foo";
+    	}
     }
 
     private String getCommitHash(String changeLogPath) throws IOException {
