@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 public class DescriptorImpl extends BuildStepDescriptor<Publisher> {
     private boolean enabled = false;
+    private String customMessage;
     private String subdomain;
     private String token;
     private String room;
@@ -27,6 +28,10 @@ public class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public String getCustomMessage() {
+        return customMessage;
     }
 
     public String getSubdomain() {
@@ -66,9 +71,13 @@ public class DescriptorImpl extends BuildStepDescriptor<Publisher> {
      */
     @Override
     public Publisher newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+        String projectCustomMessage = req.getParameter("campfireCustomMessage");
         String projectSubdomain = req.getParameter("campfireSubdomain");
         String projectToken = req.getParameter("campfireToken");
         String projectRoom = req.getParameter("campfireRoom");
+        if ( projectRoom == null || projectRoom.trim().length() == 0 ) {
+            projectRoom = room;
+        }
         if ( projectRoom == null || projectRoom.trim().length() == 0 ) {
             projectRoom = room;
         }
@@ -78,10 +87,13 @@ public class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         if ( projectSubdomain == null || projectSubdomain.trim().length() == 0 ) {
             projectSubdomain = subdomain;
         }
+        if ( projectCustomMessage == null || projectCustomMessage.trim().length() == 0 ) {
+            projectCustomMessage = customMessage;
+        }
         try {
-            return new CampfireNotifier(projectSubdomain, projectToken, projectRoom, hudsonUrl, ssl, smartNotify, sound);
+            return new CampfireNotifier(projectSubdomain, projectToken, projectRoom, hudsonUrl, ssl, smartNotify, sound, projectCustomMessage);
         } catch (Exception e) {
-            String message = "Failed to initialize campfire notifier - check your campfire notifier configuration settings: " + e.getMessage();
+            String message = "Failed to initialize campfire notifier - check your job's campfire notifier configuration settings: " + e.getMessage();
             LOGGER.log(Level.WARNING, message, e);
             throw new FormException(message, e, "");
         }
@@ -89,6 +101,7 @@ public class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
     @Override
     public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
+        customMessage = req.getParameter("campfireCustomMessage");
         subdomain = req.getParameter("campfireSubdomain");
         token = req.getParameter("campfireToken");
         room = req.getParameter("campfireRoom");
@@ -100,7 +113,7 @@ public class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         smartNotify = req.getParameter("campfireSmartNotify") != null;
         sound = req.getParameter("campfireSound") != null;
         try {
-            new CampfireNotifier(subdomain, token, room, hudsonUrl, ssl, smartNotify, sound);
+            new CampfireNotifier(subdomain, token, room, hudsonUrl, ssl, smartNotify, sound, customMessage);
         } catch (Exception e) {
             String message = "Failed to initialize campfire notifier - check your global campfire notifier configuration settings: " + e.getMessage();
             LOGGER.log(Level.WARNING, message, e);

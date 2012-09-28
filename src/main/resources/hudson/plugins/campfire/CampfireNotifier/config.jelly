@@ -3,6 +3,9 @@
     This jelly script is used for per-project configuration.
     See global.jelly for a general discussion about jelly script.
   -->
+    <f:entry title="Custom Message" description="Optional. Use to send a customized message when a build completes. You have access to the build's variables within this string." help="${rootURL}/plugin/campfire/help-projectConfig-custom-message.html">
+      <f:textbox name="campfireCustomMessage" value="${instance.getCustomMessage()}"/>
+    </f:entry>
     <f:entry title="Project Subdomain" description="Optional. Use to send notifications to a subdomain other than the default (${descriptor.getSubdomain()})" help="${rootURL}/plugin/campfire/help-projectConfig-subdomain.html">
       <f:textbox name="campfireSubdomain" value="${instance.getConfiguredSubdomain()}"/>
     </f:entry>
