@@ -147,6 +147,8 @@ public class CampfireNotifier extends Notifier {
     }
 	
     private String parseCustomMessage(String customMessage, EnvVars vars) {
+    	if (customMessage.length() == 0) return "";
+    	
         Pattern token_matcher = Pattern.compile("\\{.*?\\}");
         StringBuffer output = new StringBuffer();
         Matcher matcher = token_matcher.matcher(customMessage);
